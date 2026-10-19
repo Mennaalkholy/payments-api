@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+model Account {
+  id           String        @id @default(uuid())
+  owner        String
+  currency     String        @default("USD")
+  /// Balance in minor units (cents) to avoid floating point errors
+  balance      Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  accountId   String
+  account     Account         @relation(fields: [accountId], references: [id])
+  type        TransactionType
+  amount      Int
+  description String?
+  createdAt   DateTime        @default(now())
+
+  @@index([accountId, createdAt])
+}
